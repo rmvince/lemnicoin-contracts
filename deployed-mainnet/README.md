@@ -19,4 +19,6 @@ Compiler for all: solc 0.8.25, optimizer enabled, runs = 1, viaIR, EVM version c
 | VestingFacet | `0xaf0482CAdc57c2e0135Cb3647e19774e5F395C6B` | 2026-04-24 | `056560e4d4` |
 | VestingFacet | `0x89a1F4d8C1a3aAC028412D0078990D094c07d49c` | 2026-04-08 | `df58846765` |
 
-One facet, KeyManagementFacet (`0xeD79D936AC4A8212500214361bf104e51ff9eF56`), was compiled from a source revision that was not retained and is not yet verified.
+KeyManagementFacet (`0xeD79D936AC4A8212500214361bF104e51ff9eF56`): its runtime code is reproduced exactly by the current source at the repo root when the external library `LAIPBigInt3072` is linked at `0x3f7ce58bb476e8117bec8a5e7b6a217bf396ec97`. Only its embedded metadata hash differs (that hash covers comments and file paths, not executable code), so Polygonscan has not yet accepted it as verified.
+
+Note: LAIPV3TransferFacet was compiled with Hardhat-style source paths (`contracts/...`); its `standard-input.json` uses those paths so that the metadata hash matches exactly.
