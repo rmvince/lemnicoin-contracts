@@ -2,6 +2,8 @@
 
 The LEMNI Diamond on Polygon (`0x02011c7B7D9C6dfc563c92197557e8BE490a85b4`) is an EIP-2535 diamond with 24 facets. Eleven facets are built from the current source at the root of this repository. The twelve below are live on-chain at earlier versions of their source; each folder holds the exact source that reproduces the deployed runtime bytecode, plus the `standard-input.json` used to verify it on Polygonscan.
 
+GovernanceFacet `0x535551A0b2eC14374242eED7196f2140cbBDB2AB` (cut in on 2026-11-06, governance nonce 14) is one of the eleven built from the root source. It caps `mint()` at 10,500,000 LEMNI, which is exactly the supply minted at genesis, so no LEMNI can ever be minted again. `maxSupply()` returns that cap on-chain. It replaced GovernanceFacet `0x0f66cf647B8446da308A3Ae3aC699Ca51Bc8D839` (1,000,000,000 cap, no getter), which no longer serves any function on the diamond. Both are verified on Polygonscan.
+
 Compiler for all: solc 0.8.25, optimizer enabled, runs = 1, viaIR, EVM version cancun. OpenZeppelin Contracts 4.9.6 and Chainlink Contracts 1.2.0 are imported by some facets and are included in each `standard-input.json`.
 
 | Facet | Deployed address | Source date | Source commit (private development repo) |
