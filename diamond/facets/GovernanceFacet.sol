@@ -2,11 +2,18 @@
 pragma solidity ^0.8.25;
 
 import {Modifiers} from "../Modifiers.sol";
-import {AppStorage, MAX_SUPPLY, CEX_BYPASS_DELAY, ORACLE_UPDATE_DELAY, ORACLE_UPDATE_COOLDOWN, LibAppStorage} from "../libraries/LibAppStorage.sol";
+import {AppStorage, CEX_BYPASS_DELAY, ORACLE_UPDATE_DELAY, ORACLE_UPDATE_COOLDOWN, LibAppStorage} from "../libraries/LibAppStorage.sol";
 import {LibERC20} from "../libraries/LibERC20.sol";
 import {LibLemnicoin} from "../libraries/LibLemnicoin.sol";
 import {LibDiamond} from "../libraries/LibDiamond.sol";
 import "../../falcon/IZKNOXEthFalcon.sol";
+
+/// @dev LEMNI's hard supply cap: 10,500,000 LEMNI, exactly the supply minted at genesis, so
+/// mint() can never create another token. It supersedes LibAppStorage.MAX_SUPPLY (1,000,000,000),
+/// which no deployed facet other than the earlier GovernanceFacet ever read. It is defined here,
+/// not in LibAppStorage, so that every other facet's source stays byte-identical to its
+/// verified deployment.
+uint256 constant LEMNI_HARD_CAP = 10_500_000 * 10 ** 18;
 
 error ExceedsMaxSupply();
 error WithdrawFailed();
@@ -256,7 +263,7 @@ contract GovernanceFacet is Modifiers {
         LibLemnicoin.requireFalconGovernance(
             msg.sender, "MINT", abi.encode(to, amount), nonce, deadline, falconSalt40, falconS2
         );
-        if (s.totalSupply + amount > MAX_SUPPLY) revert ExceedsMaxSupply();
+        if (s.totalSupply + amount > LEMNI_HARD_CAP) revert ExceedsMaxSupply();
         LibERC20._mint(to, amount);
     }
 
@@ -690,6 +697,9 @@ contract GovernanceFacet is Modifiers {
     function governanceNonce(address signer) external view returns (uint256) { return s.governanceNonce[signer]; }
     function governanceAttestorNtth(uint256 index) external view returns (uint256) { return s.governanceAttestorNtth[index]; }
     function paused() external view returns (bool) { return s.paused; }
+
+    /// @notice The hard cap mint() enforces. Equal to the genesis supply: no new LEMNI can be minted.
+    function maxSupply() external pure returns (uint256) { return LEMNI_HARD_CAP; }
     function rekeyOperator() external view returns (address) { return s.rekeyOperator; }
     function circuitBreakerThreshold() external view returns (uint256) { return s.circuitBreakerThreshold; }
     function circuitBreakerWindow() external view returns (uint256) { return s.circuitBreakerWindow; }
