@@ -352,6 +352,17 @@ struct AppStorage {
     //
     // Appended at the END — never insert above this.
     mapping(address => bool) feeExempt;
+
+    // --- Circuit breaker: count each token once per window ---
+    // Tokens a wallet RECEIVED in a counted transfer during the current breaker window were
+    // already counted when they moved. When that wallet sends them on (onward, back, or
+    // around a ring of wallets) they are not counted again, so cycling LEMNI between wallets
+    // can never add more to the window volume than the tokens actually moved.
+    // cbReceivedWindow[a] is the window start the cbReceived[a] figure belongs to; any other
+    // value means "nothing received this window" (stale entries are ignored, never cleared).
+    // Appended at the END — never insert above this.
+    mapping(address => uint256) cbReceivedWindow;
+    mapping(address => uint256) cbReceived;
 }
 
 // =========================================================================

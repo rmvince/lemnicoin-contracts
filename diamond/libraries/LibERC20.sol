@@ -138,15 +138,35 @@ library LibERC20 {
         // Excluded addresses (liquidity infrastructure) are not counted, and neither are
         // self-transfers: they move nothing, and counting them let any wallet trip the breaker
         // (pausing every holder) by sending to itself in a loop.
+        // Each token counts at most once per window: whatever the sender itself received in a
+        // counted transfer during this window was already counted, so re-sending it (onward,
+        // back to the original sender, or around a ring of fresh wallets) adds nothing.
         uint256 threshold = s.circuitBreakerThreshold;
         if (threshold > 0 && from != to && !s.circuitBreakerExcluded[from] && !s.circuitBreakerExcluded[to]) {
             uint256 window = s.circuitBreakerWindow;
             // If we've moved past the current window, start a new one
             if (block.timestamp >= s.circuitBreakerWindowStart + window) {
                 s.circuitBreakerWindowStart = block.timestamp;
-                s.circuitBreakerWindowVolume = amount;
+                s.circuitBreakerWindowVolume = 0;
+            }
+            uint256 windowStart = s.circuitBreakerWindowStart;
+
+            // Portion of this transfer that was already counted on its way to `from`.
+            uint256 fresh = amount;
+            if (s.cbReceivedWindow[from] == windowStart) {
+                uint256 already = s.cbReceived[from];
+                uint256 reused = already < amount ? already : amount;
+                s.cbReceived[from] = already - reused;
+                fresh = amount - reused;
+            }
+            s.circuitBreakerWindowVolume += fresh;
+
+            // Everything `to` receives here has now been counted once this window.
+            if (s.cbReceivedWindow[to] == windowStart) {
+                s.cbReceived[to] += amount;
             } else {
-                s.circuitBreakerWindowVolume += amount;
+                s.cbReceivedWindow[to] = windowStart;
+                s.cbReceived[to] = amount;
             }
 
             // If volume exceeds threshold, auto-pause. The triggering transfer
